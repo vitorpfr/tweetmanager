@@ -1,0 +1,16 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# venv
+venv/
+
+# config files
+config.yml
+
+# PyCharm files
+.idea/
+
+# Personal files for note taking during the project
+notes.md
