@@ -14,3 +14,4 @@ config.yml
 
 # Personal files for note taking during the project
 notes.md
+test.py

@@ -1,33 +1,54 @@
-import requests
-from requests.structures import CaseInsensitiveDict
-import yaml
-
-# constants
-config = yaml.safe_load(open("config.yml"))
-
-credentials = config["credentials"]
-api_key = credentials["api_key"]
-api_key_secret = credentials["api_key_secret"]
-token = credentials["token"]
-
-twitter_api = "https://api.twitter.com"
+import twitter_api
+import json
 
 
-# helper functions
+def pprint(content):
+    print(json.dumps(content, indent=4))
+
+
+def get_tweet_id(tweet):
+    tweet.get("id")
+
+
 def get_user_by_username(username):
-    url = f"{twitter_api}/2/users/by/username/{username}"
-    headers = CaseInsensitiveDict()
-    headers["Accept"] = "application/json"
-    headers["Authorization"] = f"Bearer {token}"
+    return twitter_api.request(f"/2/users/by/username/{username}")
 
-    r = requests.get(url, headers=headers)
 
-    if r.status_code == 200:
-        return r.text
-    else:
-        raise Exception("Request to Twitter API failed: ", r.status_code, " ", r.reason)
+# TODO: finish implementation of this function - it should return a list of all tweet ids between start time and end time
+# TODO: add logger library
+def get_list_of_tweets_between_date(user_id):
+    page = 1
+    extract_results_from_all_pages = False
 
-# TODO: get list of tweets to be deleted, provided a user id
+    start_time = "2010-12-10T16:45:52.000Z"
+    end_time = "2020-12-10T16:45:54.000Z"
+    max_results = 100  # max value accepted is 100
+    tweet_fields = "created_at"
+
+    url = f"/2/users/{user_id}/tweets" \
+          f"?max_results={max_results}" \
+          f"&tweet.fields={tweet_fields}" \
+          f"&start_time={start_time}" \
+          f"&end_time={end_time}"
+
+    response = twitter_api.request(url)
+    tweets = list(
+        map(get_tweet_id, response.get("data"))
+    )
+
+    pprint(response)
+    print(f"first response has {len(response.get('data'))} tweets")
+
+    if extract_results_from_all_pages:
+        while "next_token" in response.get("meta"):
+            next_token = response.get("meta").get("next_token")
+            response = twitter_api.request(url + f"&pagination_token={next_token}")
+
+            tweets = tweets + list(map(get_tweet_id, response.get("data")))
+            page += 1
+
+    print(f"total of {page} pages searched")
+    return tweets
 
 # TODO: start deleting tweets according to rate limit, marking them as deleted in the database to guarantee idempotency
 
